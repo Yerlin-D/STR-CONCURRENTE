@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Signos Vitales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        .alerta {
+            background: #ff4d4d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Monitor de Signos Vitales en Tiempo Real</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Ritmo Cardíaco (bpm)</th>
+                <th>Temperatura (°C)</th>
+                <th>Presión Arterial</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-datos">
+            <!-- Aquí se insertarán los datos en tiempo real -->
+        </tbody>
+    </table>
+
+    <script>
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+        ws.onopen = function() {
+            console.log("✅ WebSocket conectado");
+        };
+
+        ws.onerror = function(error) {
+            console.error("❌ Error en WebSocket:", error);
+        };
+
+        ws.onmessage = function(event) {
+            console.log("📩 Datos recibidos:", event.data); // Verifica en la consola
+
+            const data = JSON.parse(event.data);
+            const tabla = document.getElementById("tabla-datos");
+
+            // Crear una nueva fila con los datos
+            const fila = document.createElement("tr");
+
+            if (data.estado === "alerta") {
+                fila.classList.add("alerta");
+            }
+
+            fila.innerHTML = `
+                <td>${data.ritmo_cardiaco} bpm</td>
+                <td>${data.temperatura} °C</td>
+                <td>${data.tension_arterial}</td>
+                <td>${data.estado === "alerta" ? "⚠️ Alerta" : "✔️ Normal"}</td>
+            `;
+
+            // Agregar la nueva fila a la tabla
+            tabla.prepend(fila);
+
+            // Limitar el número de filas para que la tabla no crezca indefinidamente
+            if (tabla.rows.length > 10) {
+                tabla.deleteRow(10);
+            }
+        };
+    </script>
+
+</body>
+</html>
